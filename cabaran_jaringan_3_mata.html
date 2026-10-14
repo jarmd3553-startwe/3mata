@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pertandingan Jaringan 3 Mata Realistik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            background-color: #020617;
+        }
+        .font-teko {
+            font-family: 'Teko', sans-serif;
+        }
+        /* Panel Kaca Glassmorphism */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        /* Butang Arked */
+        .arcade-btn {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 0 #b91c1c, 0 10px 20px rgba(185, 28, 28, 0.4);
+        }
+        .arcade-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #b91c1c, 0 14px 24px rgba(185, 28, 28, 0.5);
+        }
+        .arcade-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b91c1c, 0 4px 10px rgba(185, 28, 28, 0.3);
+        }
+        /* Animasi Teks Terapung */
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translateY(10px) scale(0.8); }
+            20% { opacity: 1; transform: translateY(0) scale(1.1); }
+            80% { opacity: 1; transform: translateY(-40px) scale(1); }
+            100% { opacity: 0; transform: translateY(-70px) scale(0.9); }
+        }
+        .float-text {
+            animation: floatUp 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        /* Denyutan Cahaya Bola Bonus */
+        @keyframes glowPulse {
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.6)); }
+            50% { filter: drop-shadow(0 0 30px rgba(239, 68, 68, 0.9)); }
+        }
+        .glowing-moneyball {
+            animation: glowPulse 1.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between select-none">
+
+    <!-- Papan Markah Atas -->
+    <header class="w-full max-w-6xl mx-auto px-4 pt-3 z-20 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <!-- Tajuk & Logo -->
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-orange-600 via-amber-500 to-yellow-400 p-0.5 shadow-lg shadow-orange-500/30 flex items-center justify-center">
+                <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-xl font-black">
+                    🏀
+                </div>
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-yellow-400 uppercase leading-none font-teko">
+                    CABARAN JARINGAN 3 MATA
+                </h1>
+                <p class="text-[11px] text-slate-400 font-semibold tracking-wider uppercase">Simulasi Gelanggang Bola Keranjang Realistik</p>
+            </div>
+        </div>
+
+        <!-- Paparan Status Permainan -->
+        <div class="grid grid-cols-5 gap-2 sm:gap-3 w-full sm:w-auto">
+            <div class="glass-card px-3 py-1.5 rounded-xl text-center min-w-[65px] sm:min-w-[75px]">
+                <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase block tracking-widest">Masa</span>
+                <span id="timeDisplay" class="text-xl sm:text-2xl font-black text-amber-400 font-teko leading-none">60s</span>
+            </div>
+            <div class="glass-card px-3 py-1.5 rounded-xl text-center min-w-[65px] sm:min-w-[75px]">
+                <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase block tracking-widest">Mata</span>
+                <span id="scoreDisplay" class="text-xl sm:text-2xl font-black text-emerald-400 font-teko leading-none">0</span>
+            </div>
+            <div class="glass-card px-3 py-1.5 rounded-xl text-center min-w-[65px] sm:min-w-[75px]">
+                <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase block tracking-widest">Beruntun</span>
+                <span id="streakDisplay" class="text-xl sm:text-2xl font-black text-orange-400 font-teko leading-none">0 🔥</span>
+            </div>
+            <div class="glass-card px-3 py-1.5 rounded-xl text-center min-w-[65px] sm:min-w-[75px]">
+                <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase block tracking-widest">Stesen</span>
+                <span id="stationDisplay" class="text-xl sm:text-2xl font-black text-cyan-400 font-teko leading-none">1/5</span>
+            </div>
+            <div class="glass-card px-3 py-1.5 rounded-xl text-center min-w-[65px] sm:min-w-[75px]">
+                <span class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase block tracking-widest">Tertinggi</span>
+                <span id="highScoreDisplay" class="text-xl sm:text-2xl font-black text-yellow-300 font-teko leading-none">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Gelanggang Utama (Canvas) -->
+    <main class="relative w-full max-w-6xl mx-auto my-2 px-2 flex flex-col items-center justify-center flex-grow">
+        <div class="relative w-full aspect-[16/9] max-h-[72vh] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-950 flex items-center justify-center">
+            
+            <!-- Gelanggang Interaktif Canvas -->
+            <canvas id="gameCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+            <!-- Hamparan Teks Maklum Balas (Jaringan Bersih, Beruntun, Bonus) -->
+            <div id="feedbackContainer" class="absolute inset-0 pointer-events-none flex items-center justify-center z-10"></div>
+
+            <!-- Menu Utama / Tamat Permainan -->
+            <div id="modalOverlay" class="absolute inset-0 bg-slate-950/85 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center z-30 transition-all duration-300">
+                <!-- Menu Mula -->
+                <div id="startMenu" class="max-w-md w-full flex flex-col items-center">
+                    <div class="w-20 h-20 mb-3 rounded-full bg-gradient-to-tr from-orange-600 to-amber-400 p-1 shadow-2xl glowing-moneyball flex items-center justify-center text-4xl">
+                        🏀
+                    </div>
+                    <h2 class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-yellow-400 font-teko uppercase tracking-wider mb-1">
+                        PERTANDINGAN JARINGAN 3 MATA
+                    </h2>
+                    <p class="text-slate-300 text-xs sm:text-sm mb-5 leading-relaxed">
+                        Tunjukkan ketepatan lontaran anda dari 5 stesen di sekeliling garisan 3 mata stadium!
+                    </p>
+                    
+                    <div class="glass-panel p-4 rounded-2xl text-xs text-slate-300 w-full mb-6 text-left space-y-2 border border-white/10">
+                        <div class="flex items-center justify-between font-bold text-amber-400 uppercase tracking-wider text-[11px] pb-1 border-b border-white/10">
+                            <span>Sistem Pemarkahan & Jenis Bola</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500 inline-block"></span> Bola Biasa (4 Biji)</span>
+                            <span class="font-bold text-emerald-400">+1 Mata</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 via-white to-red-500 inline-block"></span> Bola Bonus 🔥 (Bola ke-5)</span>
+                            <span class="font-bold text-amber-300">+2 Mata</span>
+                        </div>
+                        <div class="pt-2 border-t border-white/10 text-[11px] text-slate-400">
+                            <strong>Kawalan:</strong> Tekan & tahan butang lontar atau gunakan kekunci <kbd class="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-amber-300">RUANG (SPACE)</kbd>.
+                        </div>
+                    </div>
+
+                    <button id="startBtn" class="arcade-btn w-full py-4 bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white font-extrabold text-xl rounded-xl uppercase tracking-wider transition">
+                        MULA PERMAINAN 🚀
+                    </button>
+                </div>
+
+                <!-- Menu Tamat Permainan -->
+                <div id="gameOverMenu" class="hidden max-w-md w-full flex flex-col items-center">
+                    <div class="text-6xl mb-2 animate-bounce">🏆</div>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-amber-400 font-teko uppercase tracking-wider mb-1">WISELI PENAMAT!</h2>
+                    <p id="finalScoreText" class="text-2xl font-bold text-white my-3">Mata Akhir: <span class="text-emerald-400 font-teko text-4xl">0</span></p>
+                    
+                    <div id="newHighscoreBadge" class="hidden bg-yellow-500/20 text-yellow-300 border border-yellow-500/50 px-4 py-1.5 rounded-full text-xs font-bold mb-5 animate-pulse">
+                        🎉 REKOD TERTINGGI BARU! 🎉
+                    </div>
+
+                    <button id="restartBtn" class="arcade-btn w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-extrabold text-xl rounded-xl uppercase tracking-wider transition">
+                        MAIN LAGI 🔄
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Kawalan Bawah & Rak Bola -->
+    <footer class="w-full max-w-6xl mx-auto px-4 pb-4 z-20 flex flex-col md:flex-row items-center justify-between gap-3">
+        <!-- Status Rak Bola -->
+        <div class="glass-panel px-4 py-2.5 rounded-2xl w-full md:w-auto flex items-center justify-center gap-3">
+            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">Rak Bola:</span>
+            <div id="ballRackContainer" class="flex gap-2 items-center">
+                <!-- Ikon bola akan dimasukkan oleh JS -->
+            </div>
+        </div>
+
+        <!-- Butang Tindakan -->
+        <div class="flex items-center gap-3 w-full md:w-auto justify-center">
+            <button id="soundToggleBtn" class="p-3.5 glass-panel hover:bg-slate-800 text-slate-200 rounded-2xl text-sm font-semibold transition">
+                <span id="soundIcon">🔊</span>
+            </button>
+            <button id="pauseBtn" class="p-3.5 glass-panel hover:bg-slate-800 text-slate-200 rounded-2xl text-sm font-semibold transition">
+                ⏸️ Rehat
+            </button>
+            <button id="shootBtn" class="arcade-btn flex-grow md:flex-grow-0 px-10 py-3.5 bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 text-white font-extrabold text-xl rounded-2xl uppercase tracking-wider transition">
+                🚀 LONTAR (RUANG)
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        /**
+         * STREAMING_CHUNK:Mengkonfigurasi Audio Web API untuk kesan bunyi realistik...
+         */
+        class SoundEngineBM {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playBounce() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(35, this.ctx.currentTime + 0.09);
+
+                gain.gain.setValueAtTime(0.7, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.09);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.09);
+            }
+
+            playRimClank() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(360, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(90, this.ctx.currentTime + 0.14);
+
+                gain.gain.setValueAtTime(0.85, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.14);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.14);
+            }
+
+            playSwish() {
+                if (this.muted || !this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * 0.25;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1200, this.ctx.currentTime);
+                filter.Q.setValueAtTime(3, this.ctx.currentTime);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start();
+            }
+
+            playWhistle() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(2400, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(2800, this.ctx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.4);
+            }
+
+            playCrowdCheer() {
+                if (this.muted || !this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * 0.6;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * 0.15;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, this.ctx.currentTime);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.4, this.ctx.currentTime + 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.6);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                noise.start();
+            }
+        }
+
+        const sound = new SoundEngineBM();
+
+        /**
+         * STREAMING_CHUNK:Menyediakan pembolehubah keadaan permainan dan persekitaran Canvas...
+         */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Elemen DOM
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const streakDisplay = document.getElementById('streakDisplay');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const stationDisplay = document.getElementById('stationDisplay');
+        const ballRackContainer = document.getElementById('ballRackContainer');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const startMenu = document.getElementById('startMenu');
+        const gameOverMenu = document.getElementById('gameOverMenu');
+        const finalScoreText = document.getElementById('finalScoreText');
+        const newHighscoreBadge = document.getElementById('newHighscoreBadge');
+        const feedbackContainer = document.getElementById('feedbackContainer');
+        const shootBtn = document.getElementById('shootBtn');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const soundToggleBtn = document.getElementById('soundToggleBtn');
+
+        // Keadaan Permainan
+        let gameState = 'BERMULA';
+        let score = 0;
+        let streak = 0;
+        let highScore = parseInt(localStorage.getItem('3pt_highscore_bm_v1') || '0');
+        let timeLeft = 60;
+        let timerInterval = null;
+
+        // 5 Stesen Lontaran Bahasa Melayu
+        const STESEN = [
+            { nama: 'Penjuru Kiri', xRatio: 0.12, scale: 0.92 },
+            { nama: 'Sayap Kiri', xRatio: 0.22, scale: 0.96 },
+            { nama: 'Tengah Gelanggang', xRatio: 0.32, scale: 1.0 },
+            { nama: 'Sayap Kanan', xRatio: 0.40, scale: 1.04 },
+            { nama: 'Penjuru Kanan', xRatio: 0.48, scale: 1.08 }
+        ];
+        let indexStesenSemasa = 0;
+        let bakiBolaStesen = 5;
+
+        // Meter Kuasa & Sudut Lontaran Dinamik
+        let kuasaLontaran = 0;
+        let arahKuasa = 1;
+        let kelajuanKuasa = 2.0;
+        let sudutLontaran = 45;
+        let arahSudut = 1;
+
+        // Pemalar Fizik
+        const GRAVITI = 0.38;
+        let senaraiBola = [];
+        let senaraiZarah = [];
+
+        // Gelung & Gelanggang
+        let gelung = {
+            x: 0,
+            y: 0,
+            jejari: 22,
+            papanX: 0,
+            papanY1: 0,
+            papanY2: 0,
+            getaranJaring: 0
+        };
+
+        // Pemain
+        let pemain = {
+            x: 0,
+            y: 0,
+            sedangMelontar: false
+        };
+
+        function laraskanSaizCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            gelung.x = canvas.width * 0.82;
+            gelung.y = canvas.height * 0.42;
+            gelung.jejari = canvas.width * 0.024;
+            gelung.papanX = gelung.x + gelung.jejari + 8;
+            gelung.papanY1 = gelung.y - canvas.height * 0.16;
+            gelung.papanY2 = gelung.y + canvas.height * 0.06;
+
+            kemaskiniKedudukanPemain();
+        }
+
+        window.addEventListener('resize', laraskanSaizCanvas);
+
+        function kemaskiniKedudukanPemain() {
+            const stesen = STESEN[indexStesenSemasa];
+            pemain.x = canvas.width * stesen.xRatio;
+            pemain.y = canvas.height * 0.74;
+        }
+
+        /**
+         * STREAMING_CHUNK:Mencipta kelas Zarah dan Fizik Bola Keranjang...
+         */
+        class Zarah {
+            constructor(x, y, warna, kelajuanX, kelajuanY, saiz, hayat) {
+                this.x = x;
+                this.y = y;
+                this.warna = warna;
+                this.vx = kelajuanX;
+                this.vy = kelajuanY;
+                this.saiz = saiz;
+                this.alpha = 1;
+                this.hayatMaksimum = hayat;
+                this.hayat = hayat;
+            }
+
+            kemaskini() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1;
+                this.hayat--;
+                this.alpha = Math.max(0, this.hayat / this.hayatMaksimum);
+            }
+
+            lukis() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.warna;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.saiz, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function ciptaPercikanKeraian(x, y) {
+            const warnaWarni = ['#ef4444', '#f97316', '#eab308', '#10b981', '#06b6d4', '#3b82f6'];
+            for (let i = 0; i < 40; i++) {
+                const warna = warnaWarni[Math.floor(Math.random() * warnaWarni.length)];
+                const vx = (Math.random() - 0.5) * 8;
+                const vy = (Math.random() - 0.8) * 8;
+                senaraiZarah.push(new Zarah(x, y, warna, vx, vy, Math.random() * 3 + 2, 60));
+            }
+        }
+
+        class Bola {
+            constructor(x, y, vx, vy, adakahBolaBonus) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.jejari = canvas.width * 0.017;
+                this.adakahBolaBonus = adakahBolaBonus;
+                this.putaran = 0;
+                this.kelajuanPutaran = (Math.random() - 0.5) * 0.25;
+                this.aktif = true;
+                this.berjayaMasuk = false;
+                this.kenaRim = false;
+                this.suratanJejak = [];
+            }
+
+            kemaskini() {
+                if (!this.aktif) return;
+
+                this.suratanJejak.push({ x: this.x, y: this.y });
+                if (this.suratanJejak.length > 8) this.suratanJejak.shift();
+
+                this.vy += GRAVITI;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.putaran += this.kelajuanPutaran;
+
+                const parasLantai = canvas.height * 0.84;
+
+                // Pantulan Lantai
+                if (this.y + this.jejari > parasLantai) {
+                    this.y = parasLantai - this.jejari;
+                    this.vy *= -0.52;
+                    this.vx *= 0.72;
+                    if (Math.abs(this.vy) < 1.2) this.aktif = false;
+                    sound.playBounce();
+                }
+
+                // Pelanggaran Papan Belakang
+                if (this.x + this.jejari >= gelung.papanX - 4 && 
+                    this.x - this.jejari <= gelung.papanX + 12 &&
+                    this.y >= gelung.papanY1 && this.y <= gelung.papanY2) {
+                    
+                    this.x = gelung.papanX - 4 - this.jejari;
+                    this.vx *= -0.62;
+                    sound.playRimClank();
+                    this.kenaRim = true;
+                }
+
+                // Pelanggaran Gelung Hadapan
+                const rimX = gelung.x - gelung.jejari;
+                const rimY = gelung.y;
+                const jarakRim = Math.hypot(this.x - rimX, this.y - rimY);
+
+                if (jarakRim < this.jejari + 4) {
+                    const sudut = Math.atan2(this.y - rimY, this.x - rimX);
+                    this.vx = Math.cos(sudut) * 4.5;
+                    this.vy = Math.sin(sudut) * 4.5;
+                    sound.playRimClank();
+                    this.kenaRim = true;
+                }
+
+                // Pengesahan Jaringan Masuk
+                if (!this.berjayaMasuk && this.vy > 0 &&
+                    Math.abs(this.x - gelung.x) < gelung.jejari * 0.85 &&
+                    Math.abs(this.y - gelung.y) < 14) {
+
+                    this.berjayaMasuk = true;
+                    gelung.getaranJaring = 12;
+                    
+                    const mata = this.adakahBolaBonus ? 2 : 1;
+                    score += mata;
+                    streak++;
+
+                    scoreDisplay.textContent = score;
+                    streakDisplay.textContent = `${streak} 🔥`;
+
+                    if (!this.kenaRim) {
+                        tunjukMaklumBalas("JARINGAN BERSIH! 🔥", "text-amber-400");
+                        sound.playSwish();
+                        ciptaPercikanKeraian(gelung.x, gelung.y);
+                    } else {
+                        tunjukMaklumBalas(this.adakahBolaBonus ? "BOLA BONUS! 💰" : "MASUK! 🎯", "text-emerald-400");
+                        sound.playCrowdCheer();
+                    }
+                }
+            }
+
+            lukis() {
+                // Jejak Pergerakan Bola
+                this.suratanJejak.forEach((t, i) => {
+                    ctx.save();
+                    ctx.globalAlpha = (i / this.suratanJejak.length) * 0.3;
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, this.jejari * 0.9, 0, Math.PI * 2);
+                    ctx.fillStyle = this.adakahBolaBonus ? '#ef4444' : '#f97316';
+                    ctx.fill();
+                    ctx.restore();
+                });
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.putaran);
+
+                // Tekstur Warna Bola
+                const gradienBola = ctx.createRadialGradient(-this.jejari * 0.3, -this.jejari * 0.3, 2, 0, 0, this.jejari);
+                
+                if (this.adakahBolaBonus) {
+                    gradienBola.addColorStop(0, '#ffffff');
+                    gradienBola.addColorStop(0.4, '#3b82f6');
+                    gradienBola.addColorStop(1, '#b91c1c');
+                } else {
+                    gradienBola.addColorStop(0, '#fdba74');
+                    gradienBola.addColorStop(0.5, '#f97316');
+                    gradienBola.addColorStop(1, '#c2410c');
+                }
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.jejari, 0, Math.PI * 2);
+                ctx.fillStyle = gradienBola;
+                ctx.fill();
+                ctx.lineWidth = 1.8;
+                ctx.strokeStyle = '#1e1b4b';
+                ctx.stroke();
+
+                // Garisan Jalur Bola
+                ctx.beginPath();
+                ctx.moveTo(-this.jejari, 0); ctx.lineTo(this.jejari, 0);
+                ctx.moveTo(0, -this.jejari); ctx.lineTo(0, this.jejari);
+                ctx.arc(0, 0, this.jejari * 0.65, 0, Math.PI);
+                ctx.strokeStyle = 'rgba(15, 23, 42, 0.65)';
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        /**
+         * STREAMING_CHUNK:Melukis visual stadium realistik, lantai kayu bercorak, papan lutsinar...
+         */
+        function lukisLatarBelakangStadium() {
+            // Latar Gradien Stadium & Lampu Limpah
+            const gradienBG = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradienBG.addColorStop(0, '#020617');
+            gradienBG.addColorStop(0.5, '#0f172a');
+            gradienBG.addColorStop(1, '#1e293b');
+            ctx.fillStyle = gradienBG;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Pancaran Lampu Stadium
+            ctx.save();
+            const lampu1 = ctx.createRadialGradient(canvas.width * 0.2, 0, 10, canvas.width * 0.2, 0, canvas.height * 0.8);
+            lampu1.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+            lampu1.addColorStop(1, 'transparent');
+            ctx.fillStyle = lampu1;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const lampu2 = ctx.createRadialGradient(canvas.width * 0.8, 0, 10, canvas.width * 0.8, 0, canvas.height * 0.8);
+            lampu2.addColorStop(0, 'rgba(245, 158, 11, 0.12)');
+            lampu2.addColorStop(1, 'transparent');
+            ctx.fillStyle = lampu2;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            // Lantai Kayu Parket
+            const parasLantai = canvas.height * 0.84;
+            const tinggiLantai = canvas.height - parasLantai;
+
+            const gradienKayu = ctx.createLinearGradient(0, parasLantai, 0, canvas.height);
+            gradienKayu.addColorStop(0, '#d97706');
+            gradienKayu.addColorStop(0.3, '#b45309');
+            gradienKayu.addColorStop(1, '#78350f');
+            ctx.fillStyle = gradienKayu;
+            ctx.fillRect(0, parasLantai, canvas.width, tinggiLantai);
+
+            // Garisan Tekstur Papan Kayu
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.lineWidth = 1;
+            for (let y = parasLantai; y < canvas.height; y += 12) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Kilauan Lantai Kayu
+            const kilauan = ctx.createLinearGradient(0, parasLantai, 0, parasLantai + 25);
+            kilauan.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
+            kilauan.addColorStop(1, 'transparent');
+            ctx.fillStyle = kilauan;
+            ctx.fillRect(0, parasLantai, canvas.width, 25);
+
+            // Garisan Sempadan Gelanggang & Garisan 3 Mata
+            ctx.strokeStyle = '#f8fafc';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(0, parasLantai);
+            ctx.lineTo(canvas.width, parasLantai);
+            ctx.stroke();
+
+            // Lengkok Garisan 3 Mata
+            ctx.beginPath();
+            ctx.arc(gelung.x, parasLantai, canvas.width * 0.56, Math.PI, Math.PI * 1.5);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.setLineDash([10, 8]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        function lukisGelungDanPapan() {
+            // Tiang Besi Papan Belakang
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#334155';
+            ctx.beginPath();
+            ctx.moveTo(gelung.papanX, gelung.papanY2);
+            ctx.lineTo(gelung.papanX + 35, canvas.height * 0.84);
+            ctx.stroke();
+
+            // Papan Belakang Kaca Lutsinar
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.fillRect(gelung.papanX - 4, gelung.papanY1, 8, gelung.papanY2 - gelung.papanY1);
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(gelung.papanX - 4, gelung.papanY1, 8, gelung.papanY2 - gelung.papanY1);
+
+            // Petak Merah Sasaran Papan Belakang
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(gelung.papanX - 4, gelung.papanY1 + 20, 6, 28);
+
+            // Jaring Gelung Bergetar
+            if (gelung.getaranJaring > 0) gelung.getaranJaring -= 0.6;
+
+            const rimKiri = gelung.x - gelung.jejari;
+            const rimKanan = gelung.x + gelung.jejari;
+
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.lineWidth = 1.8;
+
+            for (let i = 0; i <= 5; i++) {
+                const nisbah = i / 5;
+                const mulaX = rimKiri + nisbah * (rimKanan - rimKiri);
+                const akhirX = rimKiri + nisbah * (rimKanan - rimKiri) * 0.6 + gelung.jejari * 0.4;
+                ctx.moveTo(mulaX, gelung.y);
+                ctx.lineTo(akhirX + Math.sin(gelung.getaranJaring) * 2, gelung.y + 32 + gelung.getaranJaring);
+            }
+            ctx.stroke();
+
+            // Rim Gelung Besi Orren
+            ctx.beginPath();
+            ctx.strokeStyle = '#ea580c';
+            ctx.lineWidth = 4.5;
+            ctx.moveTo(rimKiri, gelung.y);
+            ctx.lineTo(rimKanan, gelung.y);
+            ctx.stroke();
+        }
+
+        function lukisPemain() {
+            ctx.save();
+            ctx.translate(pemain.x, pemain.y);
+
+            // Bayangan Pemain
+            ctx.beginPath();
+            ctx.ellipse(0, 12, 22, 6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.fill();
+
+            // Kelab / Jersi Pemain
+            // Kaki
+            ctx.strokeStyle = '#1e3a8a';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(-7, 10); ctx.lineTo(-5, -15);
+            ctx.moveTo(7, 10); ctx.lineTo(5, -15);
+            ctx.stroke();
+
+            // Badan Jersi
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(-12, -45, 24, 30);
+
+            // Nombor Jersi 3
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('3', -3, -27);
+
+            // Kepala
+            ctx.beginPath();
+            ctx.arc(0, -56, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#f3d299';
+            ctx.fill();
+
+            // Pergerakan Tangan Melontar
+            ctx.strokeStyle = '#f3d299';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(8, -40);
+            
+            if (pemain.sedangMelontar) {
+                ctx.lineTo(18, -62);
+                ctx.lineTo(26, -72);
+            } else {
+                const sudutRad = (-sudutLontaran * Math.PI) / 180;
+                const tanganX = 8 + Math.cos(sudutRad) * 22;
+                const tanganY = -40 + Math.sin(sudutRad) * 22;
+                ctx.lineTo(tanganX, tanganY);
+            }
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        /**
+         * STREAMING_CHUNK:Melukis garis panduan lintasan dan meter kuasa lontaran...
+         */
+        function lukisGarisPanduanDanKuasa() {
+            if (gameState !== 'BERMAIN' || bakiBolaStesen <= 0) return;
+
+            // Ayunan Meter Kuasa & Sudut Lontaran
+            kuasaLontaran += kelajuanKuasa * arahKuasa;
+            if (kuasaLontaran >= 100 || kuasaLontaran <= 0) arahKuasa *= -1;
+
+            sudutLontaran += 0.35 * arahSudut;
+            if (sudutLontaran > 65 || sudutLontaran < 30) arahSudut *= -1;
+
+            // Garis Panduan Bintik-bintik Lintasan Bola
+            const sudutRad = (-sudutLontaran * Math.PI) / 180;
+            const gandaanKuasa = 9.5 + (kuasaLontaran / 100) * 12.5;
+            let simX = pemain.x + 15;
+            let simY = pemain.y - 50;
+            let simVx = Math.cos(sudutRad) * gandaanKuasa;
+            let simVy = Math.sin(sudutRad) * gandaanKuasa;
+
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.7)';
+            for (let i = 0; i < 20; i++) {
+                simVy += GRAVITI;
+                simX += simVx;
+                simY += simVy;
+
+                ctx.beginPath();
+                ctx.arc(simX, simY, Math.max(0.5, 3.5 - i * 0.15), 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Jalur Meter Kuasa
+            const lebarBar = 56;
+            const tinggiBar = 7;
+            const barX = pemain.x - lebarBar / 2;
+            const barY = pemain.y - 82;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(barX - 2, barY - 2, lebarBar + 4, tinggiBar + 4);
+
+            const isianBar = (kuasaLontaran / 100) * lebarBar;
+            const warnaKuasa = kuasaLontaran > 80 ? '#ef4444' : kuasaLontaran > 50 ? '#f59e0b' : '#10b981';
+            ctx.fillStyle = warnaKuasa;
+            ctx.fillRect(barX, barY, isianBar, tinggiBar);
+        }
+
+        function lontarBola() {
+            if (gameState !== 'BERMAIN' || bakiBolaStesen <= 0) return;
+
+            sound.init();
+            pemain.sedangMelontar = true;
+            setTimeout(() => pemain.sedangMelontar = false, 250);
+
+            const adakahBolaBonus = bakiBolaStesen === 1; // Bola ke-5 ialah Bola Bonus
+            const sudutRad = (-sudutLontaran * Math.PI) / 180;
+            const gandaanKuasa = 9.5 + (kuasaLontaran / 100) * 12.5;
+
+            const vx = Math.cos(sudutRad) * gandaanKuasa;
+            const vy = Math.sin(sudutRad) * gandaanKuasa;
+
+            senaraiBola.push(new Bola(pemain.x + 15, pemain.y - 50, vx, vy, adakahBolaBonus));
+
+            bakiBolaStesen--;
+            kemaskiniRakBolaUI();
+
+            if (bakiBolaStesen === 0) {
+                setTimeout(() => beralihStesenSeterusnya(), 1200);
+            }
+        }
+
+        function beralihStesenSeterusnya() {
+            if (indexStesenSemasa < STESEN.length - 1) {
+                indexStesenSemasa++;
+                bakiBolaStesen = 5;
+                kemaskiniKedudukanPemain();
+                kemaskiniRakBolaUI();
+                stationDisplay.textContent = `${indexStesenSemasa + 1}/5`;
+                tunjukMaklumBalas(`STESEN ${indexStesenSemasa + 1}: ${STESEN[indexStesenSemasa].nama}!`, "text-cyan-400");
+            } else {
+                tamatkanPermainan();
+            }
+        }
+
+        function tunjukMaklumBalas(teks, kelasWarna) {
+            const el = document.createElement('div');
+            el.className = `absolute text-3xl sm:text-5xl font-black font-teko uppercase tracking-widest ${kelasWarna} float-text pointer-events-none drop-shadow-2xl`;
+            el.textContent = teks;
+            feedbackContainer.appendChild(el);
+            setTimeout(() => el.remove(), 1100);
+        }
+
+        function kemaskiniRakBolaUI() {
+            ballRackContainer.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const bintik = document.createElement('div');
+                const adakahBonus = i === 5;
+                const telahDigunakan = i > (5 - bakiBolaStesen);
+
+                bintik.className = `w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${
+                    telahDigunakan 
+                    ? 'bg-orange-500 border-orange-300 text-white' 
+                    : adakahBonus 
+                        ? 'bg-gradient-to-r from-blue-500 via-white to-red-500 border-yellow-300 text-slate-900 glowing-moneyball' 
+                        : 'bg-slate-800 border-slate-700 text-slate-600'
+                }`;
+                bintik.textContent = adakahBonus ? '🔥' : i;
+                ballRackContainer.appendChild(bintik);
+            }
+        }
+
+        /**
+         * STREAMING_CHUNK:Gelung utama pergerakan canvas dan pengurusan kitaran permainan...
+         */
+        function gelungPermainan() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            lukisLatarBelakangStadium();
+            lukisGelungDanPapan();
+            lukisPemain();
+            lukisGarisPanduanDanKuasa();
+
+            // Kemaskini Semua Bola
+            senaraiBola.forEach(bola => {
+                bola.kemaskini();
+                bola.lukis();
+            });
+            senaraiBola = senaraiBola.filter(b => b.aktif);
+
+            // Kemaskini Zarah Keraian
+            senaraiZarah.forEach(z => {
+                z.kemaskini();
+                z.lukis();
+            });
+            senaraiZarah = senaraiZarah.filter(z => z.hayat > 0);
+
+            requestAnimationFrame(gelungPermainan);
+        }
+
+        function mulaPermainan() {
+            sound.init();
+            score = 0;
+            streak = 0;
+            timeLeft = 60;
+            indexStesenSemasa = 0;
+            bakiBolaStesen = 5;
+            senaraiBola = [];
+            senaraiZarah = [];
+            gameState = 'BERMAIN';
+
+            scoreDisplay.textContent = '0';
+            streakDisplay.textContent = '0 🔥';
+            highScoreDisplay.textContent = highScore;
+            timeDisplay.textContent = '60s';
+            stationDisplay.textContent = '1/5';
+
+            modalOverlay.classList.add('hidden');
+            startMenu.classList.add('hidden');
+            gameOverMenu.classList.add('hidden');
+
+            kemaskiniKedudukanPemain();
+            kemaskiniRakBolaUI();
+
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameState === 'BERMAIN') {
+                    timeLeft--;
+                    timeDisplay.textContent = `${timeLeft}s`;
+
+                    if (timeLeft <= 10) {
+                        timeDisplay.classList.add('text-red-500', 'animate-pulse');
+                    } else {
+                        timeDisplay.classList.remove('text-red-500', 'animate-pulse');
+                    }
+
+                    if (timeLeft <= 0) {
+                        sound.playWhistle();
+                        tamatkanPermainan();
+                    }
+                }
+            }, 1000);
+        }
+
+        function tamatkanPermainan() {
+            gameState = 'TAMAT';
+            clearInterval(timerInterval);
+
+            finalScoreText.innerHTML = `Mata Akhir: <span class="text-emerald-400 font-teko text-4xl">${score}</span>`;
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('3pt_highscore_bm_v1', highScore.toString());
+                highScoreDisplay.textContent = highScore;
+                newHighscoreBadge.classList.remove('hidden');
+            } else {
+                newHighscoreBadge.classList.add('hidden');
+            }
+
+            modalOverlay.classList.remove('hidden');
+            gameOverMenu.classList.remove('hidden');
+        }
+
+        function tukarRehat() {
+            if (gameState === 'BERMAIN') {
+                gameState = 'DIREHATKAN';
+                pauseBtn.textContent = '▶️ Teruskan';
+            } else if (gameState === 'DIREHATKAN') {
+                gameState = 'BERMAIN';
+                pauseBtn.textContent = '⏸️ Rehat';
+            }
+        }
+
+        // Pendengar Acara Kekunci & Sentuhan
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                lontarBola();
+            }
+        });
+
+        shootBtn.addEventListener('click', lontarBola);
+        startBtn.addEventListener('click', mulaPermainan);
+        restartBtn.addEventListener('click', mulaPermainan);
+        pauseBtn.addEventListener('click', tukarRehat);
+
+        soundToggleBtn.addEventListener('click', () => {
+            sound.muted = !sound.muted;
+            document.getElementById('soundIcon').textContent = sound.muted ? '🔇' : '🔊';
+        });
+
+        window.onload = () => {
+            laraskanSaizCanvas();
+            highScoreDisplay.textContent = highScore;
+            kemaskiniRakBolaUI();
+            requestAnimationFrame(gelungPermainan);
+        };
+    </script>
+</body>
+</html>
